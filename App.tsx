@@ -160,6 +160,15 @@ function Main() {
     }
   };
 
+  const sendTest = async () => {
+    try {
+      await NotifyModule.sendTestNotification();
+      setMsg('🔔 Đã gửi thông báo thử, kiểm tra trên Mac');
+    } catch (e: any) {
+      Alert.alert('Không gửi được', e?.message ?? '');
+    }
+  };
+
   const sendClip = async () => {
     try {
       await NotifyModule.sendClipboard();
@@ -211,6 +220,7 @@ function Main() {
 
         <Text style={s.h2}>Thông báo</Text>
         <Button title="Chọn app được gửi thông báo (whitelist)" onPress={() => setPicker(true)} />
+        <Button title="Gửi thông báo thử sang Mac" onPress={sendTest} secondary />
 
         <Text style={s.h2}>Clipboard</Text>
         <Text style={s.hint}>

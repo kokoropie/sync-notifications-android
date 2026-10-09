@@ -66,6 +66,28 @@ class NotifyModule(private val rc: ReactApplicationContext) : ReactContextBaseJa
     }
   }
 
+  /** Gửi một thông báo thử sang Mac để kiểm tra toàn bộ luồng Android → server → Mac. */
+  @ReactMethod
+  fun sendTestNotification(promise: Promise) {
+    Api.io {
+      try {
+        val now = System.currentTimeMillis()
+        val body = JSONObject()
+          .put("type", "notification")
+          .put("id", "test-$now")
+          .put("timestamp", now)
+          .put("packageName", rc.packageName)
+          .put("appName", "Sync Notification")
+          .put("title", "Thông báo thử")
+          .put("text", "Nếu bạn thấy thông báo này trên Mac, đồng bộ đang hoạt động.")
+        Api.request(rc, "POST", "/api/events", body)
+        promise.resolve(true)
+      } catch (e: Exception) {
+        promise.reject("E_TEST", e.message, e)
+      }
+    }
+  }
+
   @ReactMethod
   fun getStatus(promise: Promise) {
     val listeners = Settings.Secure.getString(rc.contentResolver, "enabled_notification_listeners").orEmpty()
