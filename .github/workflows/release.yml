@@ -42,15 +42,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # NDK/build-tools/platform đúng phiên bản dự án cần thường không có sẵn trên runner nên Gradle tải lại mỗi lần (>1 GB).
-      # Khóa theo android/build.gradle; đổi phiên bản trong build.gradle thì cũng phải đổi đường dẫn bên dưới cho khớp. Cache ghi từ main, tag đọc lại.
+      # NDK đúng phiên bản dự án cần không có sẵn trên runner nên Gradle tải lại mỗi lần (>1 GB).
+      # Không cache build-tools/platforms: runner đã cài sẵn (thuộc root) nên tar không ghi đè được.
+      # Khóa theo android/build.gradle; đổi ndkVersion trong build.gradle thì cũng phải đổi đường dẫn bên dưới cho khớp. Cache ghi từ main, tag đọc lại.
       - name: Cache Android SDK components
         uses: actions/cache@v4
         with:
           path: |
             /usr/local/lib/android/sdk/ndk/27.1.12297006
-            /usr/local/lib/android/sdk/build-tools/37.0.0
-            /usr/local/lib/android/sdk/platforms/android-37
           key: android-sdk-${{ runner.os }}-${{ hashFiles('android/build.gradle') }}
 
       - uses: gradle/actions/setup-gradle@v4
