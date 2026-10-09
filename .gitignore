@@ -76,3 +76,6 @@ yarn-error.log
 
 *.keystore
 !debug.keystore
+
+# Khóa ký release (cấu hình + keystore theo project)
+keystore.properties

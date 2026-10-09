@@ -74,6 +74,10 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -94,13 +98,13 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        // Khóa release lấy từ gradle.properties (hoặc ~/.gradle/gradle.properties), không commit vào git
-        if (project.hasProperty('NOTIFY_STORE_FILE')) {
+        // Khóa release lấy từ android/keystore.properties (không commit). Tạo bằng: npm run keystore:create
+        if (keystoreProps.getProperty('storeFile')) {
             release {
-                storeFile file(NOTIFY_STORE_FILE)
-                storePassword NOTIFY_STORE_PASSWORD
-                keyAlias NOTIFY_KEY_ALIAS
-                keyPassword NOTIFY_KEY_PASSWORD
+                storeFile rootProject.file(keystoreProps.getProperty('storeFile'))
+                storePassword keystoreProps.getProperty('storePassword')
+                keyAlias keystoreProps.getProperty('keyAlias')
+                keyPassword keystoreProps.getProperty('keyPassword')
             }
         }
     }
@@ -109,8 +113,8 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // Có NOTIFY_STORE_FILE thì ký bằng khóa release, không thì tạm ký bằng khóa debug
-            signingConfig project.hasProperty('NOTIFY_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
+            // Có keystore.properties thì ký bằng khóa release, không thì tạm ký bằng khóa debug
+            signingConfig keystoreProps.getProperty('storeFile') ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
