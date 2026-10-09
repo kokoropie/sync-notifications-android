@@ -29,6 +29,9 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      # Push lên main chỉ để làm nóng cache (NDK + dependency), không build APK. Tag và chạy tay thì build đầy đủ.
+      WARM_ONLY: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -67,6 +70,7 @@ jobs:
       # Có đủ secrets thì ký bằng khóa release của bạn; thiếu thì APK ký bằng khóa debug (không cập nhật đè được lên bản ký khác)
       - name: Set up release signing
         id: sign
+        if: env.WARM_ONLY != 'true'
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -86,7 +90,18 @@ jobs:
           } > android/keystore.properties
           echo "signed=true" >> "$GITHUB_OUTPUT"
 
+      # Chỉ cần Gradle tải dependency và cài NDK (configureCMake) để tag build sau dùng lại cache; không biên dịch/đóng gói APK
+      - name: Warm Gradle and NDK caches
+        if: env.WARM_ONLY == 'true'
+        working-directory: android
+        run: >
+          ./gradlew --console=plain
+          -PreactNativeArchitectures=arm64-v8a
+          ':app:configureCMakeRelWithDebInfo[arm64-v8a]'
+          :app:checkReleaseDuplicateClasses
+
       - name: Build release APK
+        if: env.WARM_ONLY != 'true'
         working-directory: android
         run: >
           ./gradlew assembleRelease
@@ -97,11 +112,13 @@ jobs:
           -PappVersionCode=${{ github.run_number }}
 
       - name: Rename APK
+        if: env.WARM_ONLY != 'true'
         run: |
           mkdir -p dist
           cp android/app/build/outputs/apk/release/app-release.apk "dist/SyncNotification-${{ steps.ver.outputs.version }}.apk"
 
       - uses: actions/upload-artifact@v4
+        if: env.WARM_ONLY != 'true'
         with:
           name: SyncNotification-apk
           path: dist/*.apk
