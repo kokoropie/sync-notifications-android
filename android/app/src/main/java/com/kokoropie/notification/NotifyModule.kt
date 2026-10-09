@@ -29,6 +29,45 @@ class NotifyModule(private val rc: ReactApplicationContext) : ReactContextBaseJa
     promise.resolve(Arguments.createMap().apply { putString("version", v) })
   }
 
+  /** Hỏi GitHub Releases xem có bản mới không. */
+  @ReactMethod
+  fun checkUpdate(promise: Promise) {
+    Api.io {
+      try {
+        val r = Updater.fetchLatest()
+        promise.resolve(Arguments.createMap().apply {
+          putBoolean("available", Updater.isNewer(r.version, Updater.currentVersion(rc)) && r.apkUrl != null)
+          putString("version", r.version)
+          putString("notes", r.notes)
+          putString("url", r.apkUrl)
+          putDouble("size", r.size.toDouble())
+        })
+      } catch (e: Exception) {
+        promise.reject("E_UPDATE", e.message, e)
+      }
+    }
+  }
+
+  /** Tải APK, kiểm tra chữ ký rồi mở trình cài đặt. Trả "permission" nếu cần cấp quyền cài app trước. */
+  @ReactMethod
+  fun installUpdate(url: String, promise: Promise) {
+    if (!Updater.canInstall(rc)) {
+      Updater.openInstallPermission(rc)
+      promise.resolve("permission")
+      return
+    }
+    Api.io {
+      try {
+        val apk = Updater.download(rc, url)
+        Updater.verify(rc, apk)
+        Updater.launchInstaller(rc, apk)
+        promise.resolve("installing")
+      } catch (e: Exception) {
+        promise.reject("E_UPDATE", e.message, e)
+      }
+    }
+  }
+
   @ReactMethod
   fun getConfig(promise: Promise) {
     val p = Prefs.get(rc)

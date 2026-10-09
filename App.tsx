@@ -45,6 +45,8 @@ const Row = ({ label, ok, action }: { label: string; ok: boolean; action?: () =>
   </View>
 );
 
+type UpdateInfo = { available: boolean; version: string; notes: string; url: string; size: number };
+
 type AppInfo = { packageName: string; label: string; icon?: string };
 
 function AppPicker({ onClose }: { onClose: () => void }) {
@@ -129,6 +131,34 @@ function Main() {
   const [status, setStatus] = useState<Status | null>(null);
   const [msg, setMsg] = useState('');
   const [version, setVersion] = useState('');
+  const [update, setUpdate] = useState<UpdateInfo | null>(null);
+  const [updateMsg, setUpdateMsg] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  const checkUpdate = useCallback(async (manual: boolean) => {
+    if (manual) setUpdateMsg('Đang kiểm tra…');
+    try {
+      const u: UpdateInfo = await NotifyModule.checkUpdate();
+      setUpdate(u.available ? u : null);
+      setUpdateMsg(u.available ? '' : manual ? 'Bạn đang dùng bản mới nhất' : '');
+    } catch (e: any) {
+      setUpdateMsg(manual ? '❌ ' + (e?.message ?? 'Không kiểm tra được') : '');
+    }
+  }, []);
+
+  const installUpdate = async () => {
+    if (!update) return;
+    setUpdating(true);
+    setUpdateMsg('Đang tải bản cập nhật…');
+    try {
+      const r = await NotifyModule.installUpdate(update.url);
+      setUpdateMsg(r === 'permission' ? 'Hãy bật "Cho phép từ nguồn này", quay lại app rồi bấm cài đặt lần nữa' : 'Hãy xác nhận cài đặt trên màn hình hệ thống');
+    } catch (e: any) {
+      setUpdateMsg('❌ ' + (e?.message ?? 'Cập nhật thất bại'));
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const refresh = useCallback(async () => setStatus(await NotifyModule.getStatus()), []);
 
@@ -141,9 +171,10 @@ function Main() {
     });
     NotifyModule.getAppInfo().then((i: any) => setVersion(i.version));
     refresh();
+    checkUpdate(false);
     const sub = AppState.addEventListener('change', st => st === 'active' && refresh());
     return () => sub.remove();
-  }, [refresh]);
+  }, [refresh, checkUpdate]);
 
   const requestRuntime = async (perms: string[]) => {
     await PermissionsAndroid.requestMultiple(perms as any);
@@ -228,6 +259,21 @@ function Main() {
           dùng ô "Gửi clipboard" trong Quick Settings, hoặc Chia sẻ → "Gửi sang Mac".
         </Text>
         <Button title="Gửi clipboard sang Mac" onPress={sendClip} />
+
+        <Text style={s.h2}>Cập nhật</Text>
+        <Text style={s.hint}>Phiên bản hiện tại: {version}</Text>
+        {update && (
+          <>
+            <Text style={s.rowLabel}>
+              🆕 Có phiên bản {update.version}
+              {update.size > 0 ? ` (${(update.size / 1048576).toFixed(1)} MB)` : ''}
+            </Text>
+            {!!update.notes && <Text style={s.hint} numberOfLines={6}>{update.notes}</Text>}
+            <Button title={updating ? 'Đang xử lý…' : 'Tải và cài đặt'} onPress={updating ? () => {} : installUpdate} />
+          </>
+        )}
+        <Button title="Kiểm tra cập nhật" onPress={() => checkUpdate(true)} secondary />
+        {!!updateMsg && <Text style={s.msg}>{updateMsg}</Text>}
 
         <Text style={s.h2}>Giới thiệu</Text>
         <View style={s.about}>
