@@ -69,7 +69,7 @@ Có `keystore.properties` thì `assembleRelease` ký bằng khóa này, không t
 
 - Dùng script: `npm run release -- 1.2.0` (hoặc `patch` / `minor` / `major` để tăng từ tag mới nhất; thêm `-n` để chạy thử không tạo tag, `-y` để bỏ xác nhận). Script tạo tag `v1.2.0` và push.
 - Hoặc thủ công: push tag dạng `v*` → workflow build APK và đăng lên Releases.
-- Pull request hoặc chạy tay (`workflow_dispatch`) → build APK, lưu ở mục Artifacts, không phát hành.
+- Chạy tay (`workflow_dispatch`) → build APK, lưu ở mục Artifacts, không phát hành.
 
 Secrets để ký bằng khóa release (thiếu thì workflow cảnh báo và ký bằng khóa debug):
 
