@@ -24,6 +24,12 @@ class NotifyModule(private val rc: ReactApplicationContext) : ReactContextBaseJa
   override fun getName() = "NotifyModule"
 
   @ReactMethod
+  fun getAppInfo(promise: Promise) {
+    val v = rc.packageManager.getPackageInfo(rc.packageName, 0).versionName ?: ""
+    promise.resolve(Arguments.createMap().apply { putString("version", v) })
+  }
+
+  @ReactMethod
   fun getConfig(promise: Promise) {
     val p = Prefs.get(rc)
     promise.resolve(Arguments.createMap().apply {

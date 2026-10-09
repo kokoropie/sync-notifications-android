@@ -4,6 +4,7 @@ import {
   BackHandler,
   FlatList,
   Image,
+  Linking,
   AppState,
   NativeModules,
   PermissionsAndroid,
@@ -127,6 +128,7 @@ function Main() {
   const [clipboardSync, setClipboardSync] = useState(true);
   const [status, setStatus] = useState<Status | null>(null);
   const [msg, setMsg] = useState('');
+  const [version, setVersion] = useState('');
 
   const refresh = useCallback(async () => setStatus(await NotifyModule.getStatus()), []);
 
@@ -137,6 +139,7 @@ function Main() {
       setDeviceName(c.deviceName);
       setClipboardSync(c.clipboardSync);
     });
+    NotifyModule.getAppInfo().then((i: any) => setVersion(i.version));
     refresh();
     const sub = AppState.addEventListener('change', st => st === 'active' && refresh());
     return () => sub.remove();
@@ -215,6 +218,17 @@ function Main() {
           dùng ô "Gửi clipboard" trong Quick Settings, hoặc Chia sẻ → "Gửi sang Mac".
         </Text>
         <Button title="Gửi clipboard sang Mac" onPress={sendClip} />
+
+        <Text style={s.h2}>Giới thiệu</Text>
+        <View style={s.about}>
+          <Image source={require('./assets/logo-bell.png')} style={s.aboutLogo} />
+          <Text style={s.aboutName}>Sync Notification</Text>
+          <Text style={s.hint}>Phiên bản {version}</Text>
+          <Text style={s.hint}>Tác giả: Kaga Akatsuki</Text>
+          <Pressable onPress={() => Linking.openURL('mailto:admin@kokoropie.info.vn')}>
+            <Text style={s.link}>admin@kokoropie.info.vn</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -235,6 +249,10 @@ const s = StyleSheet.create({
   btnText: { color: '#fff', fontWeight: '600' },
   btnTextSecondary: { color: '#111' },
   msg: { fontSize: 14, color: '#111' },
+  about: { alignItems: 'center', gap: 4, paddingVertical: 12 },
+  aboutLogo: { width: 72, height: 72 },
+  aboutName: { fontSize: 18, fontWeight: '600', color: '#111' },
+  link: { fontSize: 13, color: '#2563eb' },
   hint: { fontSize: 13, color: '#555' },
 });
 
