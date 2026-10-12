@@ -17,6 +17,8 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
@@ -74,13 +76,15 @@ class SyncService : Service() {
   private fun connect() {
     ws?.cancel()
     val p = Prefs.get(this)
-    val q = "key=${enc(p.accountKey)}&deviceId=${enc(p.deviceId)}&name=${enc(p.deviceName)}&platform=android"
+    val q = "key=${enc(p.accountKey)}&deviceId=${enc(p.deviceId)}&name=${enc(p.deviceName)}&platform=android&encrypt=1"
     val url = p.serverUrl.replaceFirst("http", "ws") + "/ws?" + q
     ws = http.newWebSocket(Request.Builder().url(url).build(), object : WebSocketListener() {
       override fun onOpen(webSocket: WebSocket, response: Response) { retry = 0 }
 
-      override fun onMessage(webSocket: WebSocket, text: String) {
-        val m = try { JSONObject(text) } catch (e: Exception) { return }
+      // encrypt=1: server chỉ gửi frame binary đã mã hoá bằng Kaga
+      override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+        val json = Kaga.fromFrame(bytes.toByteArray(), Kaga.saltOf(Prefs.get(this@SyncService).accountKey)) ?: return
+        val m = try { JSONObject(json) } catch (e: Exception) { return }
         if (m.optString("kind") == "clipboard") applyRemote(m.optString("text"))
       }
 
@@ -110,7 +114,7 @@ class SyncService : Service() {
     } catch (e: Exception) { null }
     if (text.isNullOrEmpty() || text == lastClip) return
     lastClip = text
-    ws?.send(JSONObject().put("kind", "clipboard").put("text", text).toString())
+    ws?.send(Kaga.toFrame(JSONObject().put("kind", "clipboard").put("text", text).toString(), Kaga.saltOf(Prefs.get(this).accountKey)).toByteString())
   }
 
   override fun onDestroy() {
