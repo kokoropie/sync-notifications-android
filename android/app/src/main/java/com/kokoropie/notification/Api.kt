@@ -11,6 +11,9 @@ import java.util.concurrent.TimeUnit
 
 /** HTTP client tối giản; gửi sự kiện lên server kèm retry có backoff. */
 object Api {
+  /** Header đặc biệt để Cloudflare chỉ cho request từ app đi qua. */
+  const val GATE_HEADER = "X-Notification-Secret"
+  val GATE_VALUE: String = BuildConfig.GATE_SECRET
   private const val TAG = "NotifyApi"
   private val retryDelays = longArrayOf(5, 30, 120, 600) // giây
   private val pool = ScheduledThreadPoolExecutor(2)
@@ -25,6 +28,7 @@ object Api {
       conn.readTimeout = 15_000
       conn.setRequestProperty("Authorization", "Bearer ${p.accountKey}")
       conn.setRequestProperty("X-Device-Id", p.deviceId)
+      conn.setRequestProperty(GATE_HEADER, GATE_VALUE)
       if (body != null) {
         conn.doOutput = true
         conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")

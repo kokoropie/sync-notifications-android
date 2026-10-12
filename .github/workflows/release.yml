@@ -104,6 +104,8 @@ jobs:
       - name: Build release APK
         if: env.WARM_ONLY != 'true'
         working-directory: android
+        env:
+          NOTIFICATION_SECRET: ${{ secrets.NOTIFICATION_SECRET }}
         run: >
           ./gradlew assembleRelease
           --console=plain

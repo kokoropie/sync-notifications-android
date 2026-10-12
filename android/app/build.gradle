@@ -81,12 +81,22 @@ def keystoreProps = new Properties()
 def keystorePropsFile = rootProject.file('keystore.properties')
 if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
 
+// Giá trị header X-Notification-Secret (Cloudflare chặn nếu thiếu). Không commit:
+// lấy từ env NOTIFICATION_SECRET, -PgateSecret=..., hoặc gateSecret=... trong android/local.properties
+def localProps = new Properties()
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) localPropsFile.withInputStream { localProps.load(it) }
+def gateSecret = (System.getenv('NOTIFICATION_SECRET') ?: project.findProperty('gateSecret') ?: localProps.getProperty('gateSecret') ?: '').toString()
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.kokoropie.notification"
+    buildFeatures {
+        buildConfig true
+    }
     defaultConfig {
         applicationId "com.kokoropie.notification"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -94,6 +104,7 @@ android {
         // CI truyền -PappVersionName=1.2.3 -PappVersionCode=<run number>
         versionCode appVersionCode
         versionName appVersionName
+        buildConfigField "String", "GATE_SECRET", "\"${gateSecret}\""
     }
     signingConfigs {
         debug {
