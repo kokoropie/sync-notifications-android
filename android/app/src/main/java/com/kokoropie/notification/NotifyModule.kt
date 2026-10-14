@@ -96,9 +96,9 @@ class NotifyModule(private val rc: ReactApplicationContext) : ReactContextBaseJa
   fun testConnection(promise: Promise) {
     Api.io {
       try {
-        val body = JSONObject().put("name", Prefs.get(rc).deviceName).put("platform", "android")
-        Api.request(rc, "POST", "/api/devices", body)
-        promise.resolve(true)
+        val body = JSONObject().put("name", Prefs.get(rc).deviceName).put("platform", "android").put("version", Updater.currentVersion(rc))
+        val version = JSONObject(Api.request(rc, "POST", "/api/devices", body)).optString("version")
+        promise.resolve(version)
       } catch (e: Exception) {
         promise.reject("E_CONNECT", e.message, e)
       }

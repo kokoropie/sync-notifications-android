@@ -76,7 +76,7 @@ class SyncService : Service() {
   private fun connect() {
     ws?.cancel()
     val p = Prefs.get(this)
-    val q = "key=${enc(p.accountKey)}&deviceId=${enc(p.deviceId)}&name=${enc(p.deviceName)}&platform=android&encrypt=1"
+    val q = "key=${enc(p.accountKey)}&deviceId=${enc(p.deviceId)}&name=${enc(p.deviceName)}&platform=android&version=${enc(Updater.currentVersion(this))}&encrypt=1"
     val url = p.serverUrl.replaceFirst("http", "ws") + "/ws?" + q
     ws = http.newWebSocket(Request.Builder().url(url).header(Api.GATE_HEADER, Api.GATE_VALUE).build(), object : WebSocketListener() {
       override fun onOpen(webSocket: WebSocket, response: Response) { retry = 0 }

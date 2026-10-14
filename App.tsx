@@ -184,8 +184,8 @@ function Main() {
   const save = async () => {
     await NotifyModule.saveConfig({ serverUrl, accountKey, deviceName, clipboardSync });
     try {
-      await NotifyModule.testConnection();
-      setMsg('✅ Kết nối server thành công');
+      const serverVersion = await NotifyModule.testConnection();
+      setMsg('✅ Kết nối server thành công' + (serverVersion ? ` (v${serverVersion})` : ''));
     } catch (e: any) {
       setMsg('❌ ' + (e?.message ?? 'Không kết nối được'));
     }
