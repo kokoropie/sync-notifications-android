@@ -130,6 +130,8 @@ function Main() {
   const [clipboardSync, setClipboardSync] = useState(true);
   const [status, setStatus] = useState<Status | null>(null);
   const [msg, setMsg] = useState('');
+  const [notifMsg, setNotifMsg] = useState('');
+  const [clipMsg, setClipMsg] = useState('');
   const [version, setVersion] = useState('');
   const [update, setUpdate] = useState<UpdateInfo | null>(null);
   const [updateMsg, setUpdateMsg] = useState('');
@@ -194,7 +196,7 @@ function Main() {
   const sendTest = async () => {
     try {
       await NotifyModule.sendTestNotification();
-      setMsg('🔔 Đã gửi thông báo thử, kiểm tra trên Mac');
+      setNotifMsg('🔔 Đã gửi thông báo thử, kiểm tra trên Mac');
     } catch (e: any) {
       Alert.alert('Không gửi được', e?.message ?? '');
     }
@@ -203,7 +205,7 @@ function Main() {
   const sendClip = async () => {
     try {
       await NotifyModule.sendClipboard();
-      setMsg('📋 Đã gửi clipboard sang Mac');
+      setClipMsg('📋 Đã gửi clipboard sang Mac');
     } catch (e: any) {
       Alert.alert('Không gửi được', e?.message ?? '');
     }
@@ -252,6 +254,7 @@ function Main() {
         <Text style={s.h2}>Thông báo</Text>
         <Button title="Chọn app được gửi thông báo (whitelist)" onPress={() => setPicker(true)} />
         <Button title="Gửi thông báo thử sang Mac" onPress={sendTest} secondary />
+        {!!notifMsg && <Text style={s.msg}>{notifMsg}</Text>}
 
         <Text style={s.h2}>Clipboard</Text>
         <Text style={s.hint}>
@@ -259,6 +262,7 @@ function Main() {
           dùng ô "Gửi clipboard" trong Quick Settings, hoặc Chia sẻ → "Gửi sang Mac".
         </Text>
         <Button title="Gửi clipboard sang Mac" onPress={sendClip} />
+        {!!clipMsg && <Text style={s.msg}>{clipMsg}</Text>}
 
         <Text style={s.h2}>Cập nhật</Text>
         <Text style={s.hint}>Phiên bản hiện tại: {version}</Text>
