@@ -68,6 +68,12 @@ jobs:
 
       - run: npm ci
 
+      # DSN Sentry (secret SENTRY_DSN, tuỳ chọn) được nhúng lúc build vào sentry.dsn.ts
+      - name: Generate Sentry config
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: node scripts/gen-sentry-config.js
+
       # Có đủ secrets thì ký bằng khóa release của bạn; thiếu thì APK ký bằng khóa debug (không cập nhật đè được lên bản ký khác)
       - name: Set up release signing
         id: sign

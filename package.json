@@ -7,6 +7,10 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
+    "sentry:config": "node scripts/gen-sentry-config.js",
+    "prebuild:release": "npm run sentry:config",
+    "prestart": "npm run sentry:config",
+    "pretest": "npm run sentry:config",
     "build:debug": "cd android && JAVA_HOME=\"${JAVA_HOME_17:-$(/usr/libexec/java_home -v 17 2>/dev/null || echo $JAVA_HOME)}\" ./gradlew assembleDebug",
     "build:release": "cd android && JAVA_HOME=\"${JAVA_HOME_17:-$(/usr/libexec/java_home -v 17 2>/dev/null || echo $JAVA_HOME)}\" ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a",
     "build:clean": "cd android && JAVA_HOME=\"${JAVA_HOME_17:-$(/usr/libexec/java_home -v 17 2>/dev/null || echo $JAVA_HOME)}\" ./gradlew clean",
@@ -16,9 +20,10 @@
     "release": "bash scripts/release.sh"
   },
   "dependencies": {
+    "@react-native/new-app-screen": "0.87.1",
+    "@sentry/react-native": "^8.30.0",
     "react": "19.2.3",
     "react-native": "0.87.1",
-    "@react-native/new-app-screen": "0.87.1",
     "react-native-safe-area-context": "^5.5.2"
   },
   "devDependencies": {

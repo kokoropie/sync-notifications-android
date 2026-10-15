@@ -79,3 +79,8 @@ yarn-error.log
 
 # Khóa ký release (cấu hình + keystore theo project)
 keystore.properties
+
+# Sentry
+.sentry-dsn
+.sentryclirc
+sentry.dsn.ts
