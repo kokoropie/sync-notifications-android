@@ -11,7 +11,7 @@ Yêu cầu: Android 8.0 trở lên (khuyến nghị 10+).
 
 ## Cài đặt
 
-1. Tải `SyncNotification-<phiên bản>.apk` ở trang [Releases](../../releases) và cài (cho phép cài từ nguồn này khi hệ thống hỏi).
+1. Tải `SyncNotification-<phiên bản>-<abi>.apk` ở trang [Releases](../../releases) và cài (cho phép cài từ nguồn này khi hệ thống hỏi). Hầu hết điện thoại hiện nay dùng `arm64-v8a`; máy đời cũ 32-bit dùng `armeabi-v7a`; emulator dùng `x86_64`/`x86`; không chắc thì tải bản `universal` (nặng hơn, chạy mọi máy). Cập nhật trong app tự chọn đúng bản cho máy.
 2. Mở app, nhập **URL server** và **Account key** (`ntf_…`, do người quản trị server tạo bằng `npm run key:create`), bấm **Lưu & kiểm tra kết nối**.
 3. Cấp các quyền ở mục **Quyền**:
    - **Truy cập thông báo** (bắt buộc để đọc thông báo)

@@ -120,7 +120,8 @@ jobs:
           ./gradlew assembleRelease
           --console=plain
           -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease
-          -PreactNativeArchitectures=arm64-v8a
+          -PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86,x86_64
+          -PsplitApks=true
           -PappVersionName=${{ steps.ver.outputs.version }}
           -PappVersionCode=${{ github.run_number }}
 
@@ -128,7 +129,11 @@ jobs:
         if: env.WARM_ONLY != 'true'
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/SyncNotification-${{ steps.ver.outputs.version }}.apk"
+          for f in android/app/build/outputs/apk/release/app-*-release.apk; do
+            abi="${f##*/app-}"; abi="${abi%-release.apk}"
+            cp "$f" "dist/SyncNotification-${{ steps.ver.outputs.version }}-$abi.apk"
+          done
+          ls -lh dist
 
       - uses: actions/upload-artifact@v4
         if: env.WARM_ONLY != 'true'
