@@ -8,3 +8,7 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+
+# Giữ số dòng để stack trace (cùng mapping.txt trên Sentry) đọc được
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
