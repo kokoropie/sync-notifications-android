@@ -46,6 +46,9 @@ object Updater {
 
   /** So sánh 1.2.3 với 1.10.0; bản có hậu tố (-beta, -dev) nhỏ hơn bản chính thức cùng số. */
   fun isNewer(a: String, b: String): Boolean {
+    // Bản debug (versionName = "debug") luôn là mới nhất: không bao giờ đề nghị cập nhật đè lên nó
+    if (b == "debug") return false
+    if (a == "debug") return true
     fun parse(v: String): Pair<List<Int>, Boolean> {
       val parts = v.split("-", limit = 2)
       return parts[0].split(".").map { it.toIntOrNull() ?: 0 } to (parts.size > 1)

@@ -136,6 +136,13 @@ android {
     }
 }
 
+// Bản debug (kể cả `npm run android`) luôn mang versionName "debug" và được coi là mới nhất
+android.applicationVariants.all { variant ->
+    if (variant.buildType.name == 'debug') {
+        variant.outputs.all { output -> output.versionNameOverride = 'debug' }
+    }
+}
+
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
