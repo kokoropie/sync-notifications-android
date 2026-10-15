@@ -112,6 +112,10 @@ jobs:
         working-directory: android
         env:
           NOTIFICATION_SECRET: ${{ secrets.NOTIFICATION_SECRET }}
+          # Tuỳ chọn: có token thì Gradle upload sourcemap lên Sentry (token chỉ dùng ở bước build này)
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: >
           ./gradlew assembleRelease
           --console=plain

@@ -2,6 +2,13 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// Upload sourcemap JS (và debug file native) lên Sentry khi build release.
+// Chỉ bật khi có SENTRY_AUTH_TOKEN (+ SENTRY_ORG, SENTRY_PROJECT) trong env; token chỉ dùng lúc build, không vào APK.
+// Tắt thủ công: SENTRY_DISABLE_AUTO_UPLOAD=true
+if (System.getenv('SENTRY_AUTH_TOKEN')) {
+    apply from: "../../node_modules/@sentry/react-native/sentry.gradle"
+}
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
