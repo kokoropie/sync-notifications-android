@@ -7,6 +7,14 @@ apply plugin: "com.facebook.react"
 // Tắt thủ công: SENTRY_DISABLE_AUTO_UPLOAD=true
 if (System.getenv('SENTRY_AUTH_TOKEN')) {
     apply from: "../../node_modules/@sentry/react-native/sentry.gradle"
+    // Upload mapping.txt của R8 để stack trace Java/Kotlin đọc được
+    apply plugin: "io.sentry.android.gradle"
+    sentry {
+        // SDK đã do @sentry/react-native kéo vào, không để plugin tự cài thêm (tránh lệch phiên bản)
+        autoInstallation { enabled = false }
+        includeSourceContext = false   // không upload source code lên Sentry
+        tracingInstrumentation { enabled = false }
+    }
 }
 
 /**
@@ -66,7 +74,7 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
