@@ -138,6 +138,17 @@ android {
             }
         }
     }
+    // -PsplitApks=true: mỗi ABI một APK (+ universal chứa tất cả). Cần kèm -PreactNativeArchitectures liệt kê các ABI muốn build.
+    if (project.findProperty('splitApks') == 'true') {
+        splits {
+            abi {
+                enable true
+                reset()
+                include "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+                universalApk true
+            }
+        }
+    }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug

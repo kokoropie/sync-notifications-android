@@ -34,9 +34,13 @@ object Updater {
       val assets = json.optJSONArray("assets")
       var url: String? = null
       var size = 0L
-      if (assets != null) for (i in 0 until assets.length()) {
-        val a = assets.getJSONObject(i)
-        if (a.getString("name").endsWith(".apk")) { url = a.getString("browser_download_url"); size = a.optLong("size"); break }
+      if (assets != null) {
+        val apks = (0 until assets.length()).map { assets.getJSONObject(it) }.filter { it.getString("name").endsWith(".apk") }
+        // Ưu tiên APK đúng ABI của máy (theo thứ tự máy ưa thích), rồi tới bản universal, cuối cùng là APK bất kỳ (release cũ chỉ có 1 file)
+        val pick = Build.SUPPORTED_ABIS.firstNotNullOfOrNull { abi -> apks.firstOrNull { it.getString("name").endsWith("-$abi.apk") } }
+          ?: apks.firstOrNull { it.getString("name").endsWith("-universal.apk") }
+          ?: apks.firstOrNull()
+        if (pick != null) { url = pick.getString("browser_download_url"); size = pick.optLong("size") }
       }
       return Release(tag.removePrefix("v"), json.optString("body"), url, size)
     } finally {
