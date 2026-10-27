@@ -29,7 +29,7 @@ Một số hãng máy (Xiaomi, Oppo…) cần bật thêm "autostart" cho app.
 - Cuộc gọi đến, cuộc gọi nhỡ, cuộc gọi đã nghe.
 - **Whitelist app**: chỉ gửi thông báo của app đã chọn (tắt thì gửi tất cả). Dùng chung với Mac theo account key. Cuộc gọi không bị lọc.
 - **Gửi thông báo thử** để kiểm tra kết nối.
-- **Clipboard hai chiều**: Mac → Android luôn tự động. Android → Mac tự động khi bật dịch vụ Trợ năng; nếu không, dùng nút trong app, ô Quick Settings "Gửi clipboard", hoặc Chia sẻ → "Gửi sang Mac".
+- **Clipboard hai chiều** (chữ và ảnh — PNG/JPEG/GIF/WebP, tối đa 10MB, ảnh khác/lớn hơn tự chuyển JPEG): Mac → Android luôn tự động. Android → Mac tự động khi bật dịch vụ Trợ năng; nếu không, dùng nút trong app, ô Quick Settings "Gửi clipboard", hoặc Chia sẻ → "Gửi sang Mac".
 - **Tự cập nhật** (xem bên dưới).
 
 ### Giới hạn

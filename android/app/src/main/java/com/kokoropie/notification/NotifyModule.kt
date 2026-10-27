@@ -215,7 +215,20 @@ class NotifyModule(private val rc: ReactApplicationContext) : ReactContextBaseJa
   @ReactMethod
   fun sendClipboard(promise: Promise) {
     val cm = rc.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val text = cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(rc)?.toString()
+    val clip = cm.primaryClip
+    if (ClipImages.isImage(clip)) {
+      return Api.io {
+        try {
+          val (bytes, mime) = ClipImages.read(rc, clip) ?: return@io promise.reject("E_EMPTY", "Không đọc được ảnh")
+          ClipImages.lastHash = null // gửi tay thì luôn gửi
+          ClipImages.send(rc, bytes, mime)
+          promise.resolve(true)
+        } catch (e: Exception) {
+          promise.reject("E_SEND", e.message, e)
+        }
+      }
+    }
+    val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(rc)?.toString()
     if (text.isNullOrEmpty()) return promise.reject("E_EMPTY", "Clipboard trống")
     Api.io {
       try {

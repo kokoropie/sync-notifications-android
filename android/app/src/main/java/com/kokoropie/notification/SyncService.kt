@@ -34,7 +34,7 @@ class SyncService : Service() {
   private var stopped = false
   private val main = Handler(Looper.getMainLooper())
   private lateinit var clipboard: ClipboardManager
-  private var lastClip: String? = null // nội dung vừa nhận từ remote / vừa gửi, để chống vòng lặp
+  @Volatile private var lastClip: String? = null // nội dung vừa nhận từ remote / vừa gửi, để chống vòng lặp
 
   private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
     // Android 10+: chỉ đọc được khi app đang foreground; nếu null thì bỏ qua (dùng nút/tile/share để gửi tay)
@@ -85,7 +85,8 @@ class SyncService : Service() {
       override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
         val json = Kaga.fromFrame(bytes.toByteArray(), Kaga.saltOf(Prefs.get(this@SyncService).accountKey)) ?: return
         val m = try { JSONObject(json) } catch (e: Exception) { return }
-        if (m.optString("kind") == "clipboard") applyRemote(m.optString("text"))
+        if (m.optString("kind") != "clipboard") return
+        if (m.optString("type") == "image") applyRemoteImage(m.optString("hash")) else applyRemote(m.optString("text"))
       }
 
       override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { scheduleReconnect(webSocket) }
@@ -108,12 +109,34 @@ class SyncService : Service() {
     }
   }
 
+  private fun applyRemoteImage(hash: String) {
+    if (hash.isEmpty() || hash == ClipImages.lastHash) return
+    Api.io {
+      val clip = try { ClipImages.download(this, hash) } catch (e: Exception) { null } ?: return@io
+      ClipImages.lastHash = hash
+      main.post {
+        lastClip = null
+        clipboard.setPrimaryClip(clip)
+      }
+    }
+  }
+
   private fun pushLocalClipboard() {
+    val clip = try { clipboard.primaryClip } catch (e: Exception) { null }
+    if (ClipImages.isImage(clip)) {
+      Api.io {
+        val (bytes, mime) = ClipImages.read(this, clip) ?: return@io
+        lastClip = null
+        try { ClipImages.send(this, bytes, mime) } catch (e: Exception) { ClipImages.lastHash = null }
+      }
+      return
+    }
     val text = try {
-      clipboard.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this)?.toString()
+      clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this)?.toString()
     } catch (e: Exception) { null }
     if (text.isNullOrEmpty() || text == lastClip) return
     lastClip = text
+    ClipImages.lastHash = null
     ws?.send(Kaga.toFrame(JSONObject().put("kind", "clipboard").put("text", text).toString(), Kaga.saltOf(Prefs.get(this).accountKey)).toByteString())
   }
 
