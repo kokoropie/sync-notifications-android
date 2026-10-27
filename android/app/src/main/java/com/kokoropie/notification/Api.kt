@@ -18,26 +18,37 @@ object Api {
   private val retryDelays = longArrayOf(5, 30, 120, 600) // giây
   private val pool = ScheduledThreadPoolExecutor(2)
 
-  fun request(ctx: Context, method: String, path: String, body: JSONObject? = null): String {
+  fun request(ctx: Context, method: String, path: String, body: JSONObject? = null): String =
+    raw(ctx, method, path, body?.toString()?.toByteArray(), "application/json; charset=utf-8").first.decodeToString()
+
+  /** Upload raw bytes (vd. ảnh clipboard). */
+  fun upload(ctx: Context, path: String, bytes: ByteArray, contentType: String): String =
+    raw(ctx, "POST", path, bytes, contentType, readTimeout = 60_000).first.decodeToString()
+
+  /** GET trả về (bytes, content-type). */
+  fun download(ctx: Context, path: String): Pair<ByteArray, String?> = raw(ctx, "GET", path, readTimeout = 60_000)
+
+  private fun raw(ctx: Context, method: String, path: String, body: ByteArray? = null, contentType: String? = null, readTimeout: Int = 15_000): Pair<ByteArray, String?> {
     val p = Prefs.get(ctx)
     require(p.isConfigured) { "Chưa cấu hình server" }
     val conn = URL(p.serverUrl + path).openConnection() as HttpURLConnection
     try {
       conn.requestMethod = method
       conn.connectTimeout = 10_000
-      conn.readTimeout = 15_000
+      conn.readTimeout = readTimeout
       conn.setRequestProperty("Authorization", "Bearer ${p.accountKey}")
       conn.setRequestProperty("X-Device-Id", p.deviceId)
       conn.setRequestProperty(GATE_HEADER, GATE_VALUE)
       if (body != null) {
         conn.doOutput = true
-        conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-        conn.outputStream.use { it.write(body.toString().toByteArray()) }
+        conn.setFixedLengthStreamingMode(body.size)
+        conn.setRequestProperty("Content-Type", contentType)
+        conn.outputStream.use { it.write(body) }
       }
       val code = conn.responseCode
-      val text = (if (code < 400) conn.inputStream else conn.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
-      if (code >= 400) throw java.io.IOException("HTTP $code $text")
-      return text
+      val bytes = (if (code < 400) conn.inputStream else conn.errorStream)?.use { it.readBytes() } ?: ByteArray(0)
+      if (code >= 400) throw java.io.IOException("HTTP $code ${bytes.decodeToString()}")
+      return bytes to conn.contentType?.substringBefore(';')?.trim()
     } finally {
       conn.disconnect()
     }
