@@ -12,6 +12,7 @@ import android.content.pm.ServiceInfo
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -34,7 +35,6 @@ class SyncService : Service() {
   private var stopped = false
   private val main = Handler(Looper.getMainLooper())
   private lateinit var clipboard: ClipboardManager
-  @Volatile private var lastClip: String? = null // nội dung vừa nhận từ remote / vừa gửi, để chống vòng lặp
 
   private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
     // Android 10+: chỉ đọc được khi app đang foreground; nếu null thì bỏ qua (dùng nút/tile/share để gửi tay)
@@ -105,6 +105,7 @@ class SyncService : Service() {
     if (text.isEmpty()) return
     main.post {
       lastClip = text
+      lastRemoteAt = SystemClock.elapsedRealtime()
       clipboard.setPrimaryClip(ClipData.newPlainText("mac", text))
     }
   }
@@ -116,6 +117,7 @@ class SyncService : Service() {
       ClipImages.lastHash = hash
       main.post {
         lastClip = null
+        lastRemoteAt = SystemClock.elapsedRealtime()
         clipboard.setPrimaryClip(clip)
       }
     }
@@ -153,6 +155,12 @@ class SyncService : Service() {
 
   companion object {
     private const val CHANNEL = "sync"
+
+    /** Chữ vừa nhận từ remote / vừa gửi (dùng chung với ClipSendActivity) để chống vòng lặp. */
+    @Volatile var lastClip: String? = null
+
+    /** Lúc vừa đặt clipboard từ remote (elapsedRealtime), để dịch vụ trợ năng bỏ qua overlay "Đã sao chép". */
+    @Volatile var lastRemoteAt = 0L
 
     fun start(ctx: Context) {
       val p = Prefs.get(ctx)

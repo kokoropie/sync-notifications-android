@@ -62,7 +62,11 @@ class ClipSendActivity : Activity() {
     when {
       !Prefs.get(this).isConfigured -> toast("Chưa cấu hình server")
       text.isNullOrEmpty() -> toast("Clipboard trống")
+      // tự động (trợ năng) mà nội dung không đổi / vừa nhận từ Mac thì bỏ qua
+      silent && text == SyncService.lastClip -> Unit
       else -> {
+        SyncService.lastClip = text
+        ClipImages.lastHash = null
         Api.sendAsync(this, "/api/clipboard", JSONObject().put("text", text))
         toast("Đã gửi sang Mac")
       }

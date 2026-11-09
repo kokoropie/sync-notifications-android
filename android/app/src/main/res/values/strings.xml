@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">Sync Notification</string>
-    <string name="clipboard_a11y_desc">Cho phép app đọc clipboard khi chạy nền để đồng bộ sang Mac. App không đọc nội dung màn hình.</string>
+    <string name="clipboard_a11y_desc">Cho phép app đọc clipboard khi chạy nền để đồng bộ sang Mac. App chỉ dò nút/thông báo "Sao chép" để biết lúc bạn copy, không đọc nội dung màn hình.</string>
 </resources>
