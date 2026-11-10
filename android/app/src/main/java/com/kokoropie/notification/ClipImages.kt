@@ -34,11 +34,13 @@ object ClipImages {
     val uri = clip!!.getItemAt(0).uri
     // ảnh do chính app đặt lên (nhận từ Mac) thì không gửi ngược lại
     if (uri.authority == authority(ctx)) return null
-    return readUri(ctx, uri)
+    val declared = (0 until clip.description.mimeTypeCount).map { clip.description.getMimeType(it) }.firstOrNull { it.startsWith("image/") && it != "image/*" }
+    return readUri(ctx, uri, declared)
   }
 
-  fun readUri(ctx: Context, uri: Uri): Pair<ByteArray, String>? = try {
-    val mime = ctx.contentResolver.getType(uri)?.lowercase()
+  fun readUri(ctx: Context, uri: Uri, fallbackMime: String? = null): Pair<ByteArray, String>? = try {
+    // một số provider (Chrome, Slack...) trả getType = null hoặc "image/*" -> dùng mime khai báo trong clip
+    val mime = (ctx.contentResolver.getType(uri)?.lowercase()?.takeIf { it.startsWith("image/") && it != "image/*" } ?: fallbackMime)?.lowercase()
     val bytes = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() }
     when {
       bytes == null || mime == null || !mime.startsWith("image/") -> null

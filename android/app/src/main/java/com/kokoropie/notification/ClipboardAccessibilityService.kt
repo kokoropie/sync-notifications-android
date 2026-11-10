@@ -62,7 +62,7 @@ class ClipboardAccessibilityService : AccessibilityService() {
       val s = t.toString().trim().lowercase()
       when {
         s.isEmpty() || s.length > 80 -> false
-        click -> s in keywords
+        click -> s in keywords || COPY_ACTION_RE.containsMatchIn(s)
         else -> COPIED_RE.containsMatchIn(s)
       }
     }
@@ -120,7 +120,9 @@ class ClipboardAccessibilityService : AccessibilityService() {
 
   companion object {
     private const val TAG = "ClipA11y"
-    private val COPIED_RE = Regex("""\bcopied\b|đã sao chép""")
+    private val COPIED_RE = Regex("""\bcopied\b|đã sao chép|đã chép""")
+    // menu giữ lâu / bottom sheet của Slack, Discord, Zalo, Chrome: "Copy text", "Copy image", "Sao chép văn bản"...
+    private val COPY_ACTION_RE = Regex("""^(copy|sao chép)\s+(text|image|photo|link|link address|message|selection|văn bản|ảnh|hình ảnh|liên kết|đường dẫn|tin nhắn|nội dung)\b.{0,20}$""")
 
     @Volatile
     private var current: ClipboardManager.OnPrimaryClipChangedListener? = null

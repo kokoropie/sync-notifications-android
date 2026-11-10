@@ -13,6 +13,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -83,8 +84,10 @@ class SyncService : Service() {
 
       // encrypt=1: server chỉ gửi frame binary đã mã hoá bằng Kaga
       override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-        val json = Kaga.fromFrame(bytes.toByteArray(), Kaga.saltOf(Prefs.get(this@SyncService).accountKey)) ?: return
-        val m = try { JSONObject(json) } catch (e: Exception) { return }
+        val json = Kaga.fromFrame(bytes.toByteArray(), Kaga.saltOf(Prefs.get(this@SyncService).accountKey))
+        if (json == null) { Log.w(TAG, "không giải mã được frame ${bytes.size} byte"); return }
+        val m = try { JSONObject(json) } catch (e: Exception) { Log.w(TAG, "JSON lỗi: ${e.message}"); return }
+        Log.d(TAG, "nhận kind=${m.optString("kind")} type=${m.optString("type")} len=${m.optString("text").length}")
         if (m.optString("kind") != "clipboard") return
         if (m.optString("type") == "image") applyRemoteImage(m.optString("hash")) else applyRemote(m.optString("text"))
       }
@@ -106,14 +109,14 @@ class SyncService : Service() {
     main.post {
       lastClip = text
       lastRemoteAt = SystemClock.elapsedRealtime()
-      clipboard.setPrimaryClip(ClipData.newPlainText("mac", text))
+      try { clipboard.setPrimaryClip(ClipData.newPlainText("mac", text)) } catch (e: Exception) { Log.w(TAG, "setPrimaryClip lỗi (${text.length} ký tự)", e) }
     }
   }
 
   private fun applyRemoteImage(hash: String) {
     if (hash.isEmpty() || hash == ClipImages.lastHash) return
     Api.io {
-      val clip = try { ClipImages.download(this, hash) } catch (e: Exception) { null } ?: return@io
+      val clip = try { ClipImages.download(this, hash) } catch (e: Exception) { Log.w(TAG, "tải ảnh lỗi", e); null } ?: return@io
       ClipImages.lastHash = hash
       main.post {
         lastClip = null
@@ -155,6 +158,7 @@ class SyncService : Service() {
 
   companion object {
     private const val CHANNEL = "sync"
+    private const val TAG = "SyncService"
 
     /** Chữ vừa nhận từ remote / vừa gửi (dùng chung với ClipSendActivity) để chống vòng lặp. */
     @Volatile var lastClip: String? = null
