@@ -54,14 +54,16 @@ class ClipboardAccessibilityService : AccessibilityService() {
       e.contentDescription?.let(::add)
     }
     // bấm: nhãn nút phải đúng là "Copy"/"Sao chép" (tránh bấm vào tin nhắn có chữ copy);
-    // toast/thông báo/overlay hệ thống: chỉ cần chứa từ khoá ("Đã sao chép vào bộ nhớ tạm", "Text copied"...)
-    val click = e.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED || e.eventType == AccessibilityEvent.TYPE_VIEW_LONG_CLICKED
+    // toast/thông báo/overlay hệ thống: phải là thể đã xong ("Đã sao chép", "Text copied"...). Không khớp "Copy"
+    // ở đây vì thanh công cụ nổi khi bôi đen chữ ("Cut Copy Paste...") cũng bắn sự kiện cửa sổ -> mở activity
+    // sẽ cướp focus và làm mất vùng bôi đen.
+    val click = e.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED
     return texts.any { t ->
       val s = t.toString().trim().lowercase()
       when {
         s.isEmpty() || s.length > 80 -> false
         click -> s in keywords
-        else -> COPY_RE.containsMatchIn(s) || keywords.any { s.contains(it) }
+        else -> COPIED_RE.containsMatchIn(s)
       }
     }
   }
@@ -113,12 +115,12 @@ class ClipboardAccessibilityService : AccessibilityService() {
     val fromSystem = listOf(android.R.string.copy, android.R.string.copyUrl).mapNotNull {
       try { sys.getString(it).trim().lowercase() } catch (e: Exception) { null }
     }
-    return (fromSystem + listOf("copy", "sao chép", "đã sao chép", "copied")).toSet()
+    return (fromSystem + listOf("copy", "sao chép")).toSet()
   }
 
   companion object {
     private const val TAG = "ClipA11y"
-    private val COPY_RE = Regex("""\b(copy|copied)\b|sao chép""")
+    private val COPIED_RE = Regex("""\bcopied\b|đã sao chép""")
 
     @Volatile
     private var current: ClipboardManager.OnPrimaryClipChangedListener? = null
